@@ -1,18 +1,40 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.toml`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import { customAlphabet } from "nanoid";
+
+const idLength = 8
+const lengthLimit = 2_000
+
+const nanoid = customAlphabet('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', idLength)
+
+
+const post = async (svg: string, env: Wenv) => {
+	if (svg.length > lengthLimit) {
+		return new Response("LENGTH_LIMIT_EXCEEDED", {
+			status: 400
+		})
+	}
+
+	const id = nanoid(idLength)
+	await env.svgs.put(id, svg, {
+		expirationTtl: 60 * 10
+	})
+
+	return new Response(id)
+}
+
+
+const get = (id: string, env: Wenv) => {
+
+	return new Response()
+}
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
+		if (request.method === "POST") {
+			
+			return post(await request.text(), env)
+		}
+		const { pathname } = new URL(request.url)
+		const id = pathname.slice(1)
+		return get(id);
 	},
-} satisfies ExportedHandler<Env>;
+} satisfies ExportedHandler<Wenv>;
