@@ -6,6 +6,9 @@ dev *flags:
 typegen:
     wrangler types --env-interface Wenv
 
+deploy:
+    wrangler deploy
+
 check:
     tsc --noEmit --watch --skipLibCheck
 
